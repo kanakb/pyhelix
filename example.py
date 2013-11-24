@@ -5,9 +5,9 @@ import time
 from pyhelix import participant
 from pyhelix import statemodel
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARN)
 
-p = participant.Participant('test-cluster', 'localhost', 12120, 'localhost:2199')
+p = participant.Participant('perf-test-cluster', 'localhost', 12120, 'eat1-app87.corp:2181')
 try:
     p.register_state_model_fty('MasterSlave', statemodel.MockStateModelFactory())
     p.connect()

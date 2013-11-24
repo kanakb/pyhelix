@@ -52,5 +52,7 @@ class HelixExecutor(object):
 
         # update messages to read
         for message in messages:
+            if not message or not message['simpleFields']:
+                continue
             message['simpleFields']['MSG_STATE'] = 'READ'
             self._accessor.set(self._builder.message(self._participant_id, message['id']), message)

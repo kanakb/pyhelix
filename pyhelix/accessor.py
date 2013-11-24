@@ -46,6 +46,7 @@ class DataAccessor(object):
             logging.warn('{0} exists already'.format(path))
             return self.set(key, data)
         except kazoo.exceptions.KazooException:
+            logging.error(path)
             logging.error(traceback.format_exc())
         return False
 
@@ -69,7 +70,10 @@ class DataAccessor(object):
             logging.info('setting {0} with {1}'.format(path, data))
             self._client.set(path, data)
             return True
+        except kazoo.exceptions.NoNodeError:
+            logging.info('{0} does not exist'.format(path))
         except kazoo.exceptions.KazooException:
+            logging.error(path)
             logging.error(traceback.format_exc())
         return False
 
@@ -90,6 +94,7 @@ class DataAccessor(object):
         except kazoo.exceptions.NoNodeError:
             logging.info('{0} does not exist'.format(path))
         except kazoo.exceptions.KazooException:
+            logging.error(path)
             logging.error(traceback.format_exc())
         return None
 
@@ -159,6 +164,7 @@ class DataAccessor(object):
                 logging.info('trying again to update {0}'.format(path))
                 continue # ignore this, try again
             except kazoo.exceptions.KazooException:
+                logging.error(path)
                 logging.error(traceback.format_exc())
                 return False
         return True
@@ -181,6 +187,7 @@ class DataAccessor(object):
         except kazoo.exceptions.NoNodeError:
             logging.warn('{0} does not exist'.format(path))
         except kazoo.exceptions.KazooException:
+            logging.error(path)
             logging.error(traceback.format_exc())
         return False
 
@@ -198,6 +205,7 @@ class DataAccessor(object):
         try:
             return self._client.exists(path)
         except kazoo.exceptions.KazooException:
+            logging.error(path)
             logging.error(traceback.format_exc())
         return False
 

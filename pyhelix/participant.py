@@ -6,8 +6,6 @@ import accessor
 import helixexec
 import znode
 
-logging.basicConfig(level=logging.WARN)
-
 class Participant(object):
     """
     Participant Helix connection

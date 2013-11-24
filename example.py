@@ -7,7 +7,7 @@ from pyhelix import statemodel
 
 logging.basicConfig(level=logging.WARN)
 
-p = participant.Participant('perf-test-cluster', 'localhost', 12120, 'eat1-app87.corp:2181')
+p = participant.Participant('cluster-name', 'myhostname', 12120, 'zkhost:2181')
 try:
     p.register_state_model_fty('MasterSlave', statemodel.MockStateModelFactory())
     p.connect()

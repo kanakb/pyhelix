@@ -171,7 +171,7 @@ class Participant(object):
             True if created, False otherwise
         """
         node = znode.get_empty_znode(self._participant_id)
-        node['simpleFields'] = {'HELIX_VERSION': 'helix-python-0.1',
+        node['simpleFields'] = {'HELIX_VERSION': 'pyhelix-0.1',
             'SESSION_ID': str(self._client.client_id[0]),
             'LIVE_INSTANCE': '{0}@{1}'.format(os.getpid(), self._host)}
         return self._accessor.create(self._builder.live_instance(self._participant_id),

@@ -98,6 +98,26 @@ class DataAccessor(object):
             logging.error(traceback.format_exc())
         return None
 
+    def get_children(self, key):
+        """
+        Get the children of a property
+
+        Args:
+            key: KeyBuilder property
+
+        Returns:
+            List of child names
+        """
+        path = key['path']
+        try:
+            return self._client.get_children(path)
+        except kazoo.exceptions.NoNodeError:
+            logging.info('{0} does not exist'.format(path))
+        except kazoo.exceptions.KazooException:
+            logging.error(path)
+            logging.error(traceback.format_exc())
+        return []
+
     def update(self, key, updated_value, sub=False):
         """
         Update a property
@@ -216,12 +236,20 @@ class DataAccessor(object):
         Args:
             key: KeyBuilder property
             func: Single argument callback
-
-        Returns:
-            True if successful, False otherwise
         """
         path = key['path']
         kazoo.recipe.watchers.ChildrenWatch(self._client, path, func=func)
+
+    def watch_property(self, key, func):
+        """
+        Watch a property
+
+        Args:
+            key: KeyBuilder property
+            func: Two-argument callback that takes data, stat
+        """
+        path = key['path']
+        kazoo.recipe.watchers.DataWatch(self._client, path, func=func)
 
     def get_key_builder(self):
         """

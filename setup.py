@@ -13,7 +13,7 @@ setuptools.setup(
     license='Apache License 2.0',
     packages=setuptools.find_packages(),
     keywords='helix',
-    install_requires=['kazoo', 'futures'],
+    install_requires=['kazoo', 'futures', 'argparse'],
     include_package_data=True,
     test_suite='nose.collector',
     tests_require=['nose'],

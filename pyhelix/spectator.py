@@ -21,14 +21,18 @@ class SpectatorConnection(object):
         self._cluster_id = cluster_id
         self._client = kazoo.client.KazooClient(zk_addrs)
         self._accessor = accessor.DataAccessor(cluster_id, self._client)
+        self._keybuilder = self._accessor.get_key_builder()
         self._connected = False
         self._spectators = {}
+        self._participants = {}
 
     def connect(self):
         """
         Establish a connection
         """
         self._client.start()
+        self._accessor.watch_children(self._keybuilder.participant_configs(),
+            self._pc_parent_watcher)
         self._connected = True
 
     def disconnect(self):
@@ -58,12 +62,12 @@ class SpectatorConnection(object):
             A Spectator object
         """
         if not self._connected:
-            loggging.error('Tried to spectate on {0} without connecting!'.format(resource_id))
+            logging.error('Tried to spectate on {0} without connecting!'.format(resource_id))
             return None
         if resource_id in self._spectators:
             return self._spectators[resource_id]
         logging.debug('About to start watching {0}'.format(resource_id))
-        return Spectator(self._accessor, resource_id)
+        return Spectator(self._accessor, resource_id, self._participants)
 
     def get_accessor(self):
         """
@@ -74,19 +78,60 @@ class SpectatorConnection(object):
         """
         return self._accessor
 
+    def _pc_parent_watcher(self, children):
+        """
+        Callback for participant config children (private)
+
+        Args:
+            children: List of child names
+
+        Returns:
+            Always True
+        """
+        if not children:
+            return True
+        for child in children:
+            if child not in self._participants:
+                # Watch each participant config
+                self._accessor.watch_property(self._keybuilder.participant_config(child),
+                    self._pc_watcher)
+        return True
+
+    def _pc_watcher(self, data, stat):
+        """
+        Callback for participant config change (private)
+
+        Args:
+            data: The ZNode data
+            stat: The ZNode stat
+
+        Returns:
+            Always True
+        """
+        if not data:
+            return True
+        participant_config = json.loads(data)
+        if participant_config and 'id' in participant_config:
+            self._participants[participant_config['id']] = participant_config
+        return True
+
 class Spectator(object):
     """
     Helix spectator
     """
-    def __init__(self, accessor, resource_id):
+    def __init__(self, accessor, resource_id, participants):
         """
         Initialize a spectator for a resource
+
+        Args:
+            accessor: Instantiated DataAccessor
+            resource_id: The resource to spectate
+            participants: Map of participant id to participant config
         """
         self._mapping = {}
-        self._participants = {}
+        self._participants = participants
         self._accessor = accessor
         self._keybuilder = accessor.get_key_builder()
-        accessor.watch_children(self._keybuilder.participant_configs(), self._pc_parent_watcher)
         accessor.watch_property(self._keybuilder.external_view(resource_id), self._ev_watcher)
 
     def get_participants(self, state, partition_id=None):
@@ -126,43 +171,6 @@ class Spectator(object):
             return self._mapping[partition_id]
         else:
             return {}
-
-    def _pc_parent_watcher(self, children):
-        """
-        Callback for participant config children (private)
-
-        Args:
-            children: List of child names
-
-        Returns:
-            Always True
-        """
-        if not children:
-            return True
-        for child in children:
-            if child not in self._participants:
-                # Watch each participant config
-                self._accessor.watch_property(self._keybuilder.participant_config(child),
-                    self._pc_watcher)
-        return True
-
-    def _pc_watcher(self, data, stat):
-        """
-        Callback for participant config change (private)
-
-        Args:
-            data: The ZNode data
-            stat: The ZNode stat
-
-        Returns:
-            Always True
-        """
-        if not data:
-            return True
-        participant_config = json.loads(data)
-        if participant_config and 'id' in participant_config:
-            self._participants[participant_config['id']] = participant_config
-        return True
 
     def _ev_watcher(self, data, stat):
         """

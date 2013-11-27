@@ -9,8 +9,8 @@
         <form action="http://{{host}}:{{port}}/run" method="post">
             Set Destination:
             <select name="participant">
-                <!--option value="star">* (all)</option-->
-                <!--option value="random">random</option-->
+                <option value="star">* (all)</option>
+                <option value="random">random</option>
                 % for participant in participants:
                 <option value="{{participant}}">{{participant}}</option>
                 % end

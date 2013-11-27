@@ -4,6 +4,7 @@ import cStringIO
 import logging
 import sys
 import time
+import traceback
 
 from pyhelix import participant
 
@@ -56,7 +57,10 @@ class CodeRunnerProcess(object):
         prog = str(bottle.request.forms.get('prog'))
         old_stdout = sys.stdout
         redirected_output = sys.stdout = cStringIO.StringIO()
-        exec(prog)
+        try:
+            exec(prog)
+        except:
+            print traceback.format_exc()
         sys.stdout = old_stdout
         bottle.response.add_header('Content-Type', 'text/plain')
         return redirected_output.getvalue()

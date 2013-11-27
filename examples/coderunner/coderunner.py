@@ -1,6 +1,8 @@
 import argparse
 import bottle
 import logging
+import random
+import re
 import urllib
 import urllib2
 
@@ -64,21 +66,41 @@ class CodeRunner(object):
         """
         prog = str(bottle.request.forms.get('prog'))
         node = str(bottle.request.forms.get('participant'))
-        logging.info('Selected participant: {0}'.format(node))
+        logging.info('Selected participant(s): {0}'.format(node))
+        pattern = node
+        if node == 'star':
+            pattern = '.*'
+        elif node == 'random':
+            participants = self._s.get_participants('ONLINE')
+            if len(participants) > 0:
+                pattern = random.sample(participants, 1)[0]['id']
+        bottle.response.add_header('Content-Type', 'text/plain')
+        return self._run_on_nodes(prog, pattern)
+
+    def _run_on_nodes(self, prog, pattern):
+        """
+        Run a program on all machines that match a pattern.
+
+        Args:
+            prog: The text of the program
+            pattern: The machine pattern
+
+        Returns:
+            The aggregate output
+        """
+        output = ''
+        pattern = re.compile(pattern, re.IGNORECASE)
         participants = self._s.get_participants('ONLINE')
-        host, port = (None, None)
         for participant in participants:
-            if participant['id'] == node:
+            if pattern.match(participant['id']):
+                output += 'Output from {0}:\n'.format(participant['id'])
                 host = participant['simpleFields']['HELIX_HOST']
                 port = participant['simpleFields']['HELIX_PORT']
-        bottle.response.add_header('Content-Type', 'text/plain')
-        if host != None and port != None:
-            values = {'prog': prog}
-            data = urllib.urlencode(values)
-            result = urllib2.urlopen('http://{0}:{1}/run'.format(host, port), data)
-            return result.read()
-        else:
-            return 'Node doesn\'t exist anymore. Try another.'
+                values = {'prog': prog}
+                data = urllib.urlencode(values)
+                result = urllib2.urlopen('http://{0}:{1}/run'.format(host, port), data)
+                output += result.read() + '\n\n'
+        return output
 
     def _route(self):
         """

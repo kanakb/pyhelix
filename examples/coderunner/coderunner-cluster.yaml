@@ -8,8 +8,32 @@ resources:
     rebalancer:
       mode: FULL_AUTO # let Helix decide how to assign machines
     partitions:
-      count: 20 # number of code runner partitions
-      replicas: 1 # number that can be ONLINE per partition
+      count: 1 # every node does the same thing, so have 1 partition
+      replicas: 1 # should be ANY_LIVEINSTANCE, but the YAML tool doesn't support it
     stateModel:
-      name: OnlineOffline # ONLINE participant responds for each partition
+      name: OnlineOfflineModified # ONLINE participant on every node
+      states: [ONLINE, OFFLINE, DROPPED]
+      transitions:
+        - name: Start
+          from: OFFLINE
+          to: ONLINE
+        - name: Stop
+          from: ONLINE
+          to: OFFLINE
+        - name: Drop
+          from: OFFLINE
+          to: DROPPED
+      initialState: OFFLINE
+    constraints:
+      state:
+        counts:
+          - name: ONLINE
+            count: "N" # want to replicate ANY_LIVEINSTANCE
+          - name: OFFLINE
+            count: "-1"
+          - name: DROPPED
+            count: "-1"
+        priorityList: [ONLINE, OFFLINE, DROPPED]
+      transition:
+        priorityList: [Start, Stop, Drop]
 autoJoinAllowed: true # let anyone join and serve requests

@@ -26,7 +26,7 @@ class CodeRunnerProcess(object):
             zk_svr: host:port of a ZooKeeper server
         """
         self._p = participant.Participant(cluster, host, port, zk_svr)
-        self._p.register_state_model_fty('OnlineOffline', runnermodel.CodeRunnerModelFactory())
+        self._p.register_state_model_fty('OnlineOfflineModified', runnermodel.CodeRunnerModelFactory())
         self._app = bottle.Bottle()
         self._host = host
         self._port = port

@@ -1,8 +1,8 @@
 from pyhelix import statemodel
 
-class QueueStateModel(statemodel.StateModel):
+class CodeRunnerModel(statemodel.StateModel):
     """
-    State model for an online-offline queue set
+    State model for an online-offline code runner set
     """
     def on_become_online_from_offline(self, message):
         partition_name = message['simpleFields']['PARTITION_NAME']
@@ -16,19 +16,19 @@ class QueueStateModel(statemodel.StateModel):
         partition_name = message['simpleFields']['PARTITION_NAME']
         print('{0}: on become dropped from offline'.format(partition_name))
 
-class QueueStateModelFactory(statemodel.StateModelFactory):
+class CodeRunnerModelFactory(statemodel.StateModelFactory):
     """
-    State model factory for an online-offline queue set
+    State model factory for an online-offline code runner set
     """
     def create_state_model(self, partition_name):
         """
-        Create a QueueStateModel
+        Create a CodeRunnerModel
 
         Args:
             partition_name: The partition
 
         Returns:
-            QueueStateModel
+            CodeRunnerModel
         """
-        state_model = QueueStateModel()
+        state_model = CodeRunnerModel()
         return state_model

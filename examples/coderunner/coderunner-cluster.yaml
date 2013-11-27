@@ -1,0 +1,15 @@
+# This YAML file describes the cluster and resource used by this example.
+# To run, use:
+#    ./yaml-cluster-setup.sh zkAddr yamlFile
+# with this file.
+clusterName: coderunner-cluster # unique name for the cluster
+resources:
+  - name: coderunner # unique resource name
+    rebalancer:
+      mode: FULL_AUTO # let Helix decide how to assign machines
+    partitions:
+      count: 20 # number of code runner partitions
+      replicas: 1 # number that can be ONLINE per partition
+    stateModel:
+      name: OnlineOffline # ONLINE participant responds for each partition
+autoJoinAllowed: true # let anyone join and serve requests

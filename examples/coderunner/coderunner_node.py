@@ -27,7 +27,8 @@ class CodeRunnerProcess(object):
             zk_svr: host:port of a ZooKeeper server
         """
         self._p = participant.Participant(cluster, host, port, zk_svr)
-        self._p.register_state_model_fty('OnlineOfflineModified', runnermodel.CodeRunnerModelFactory())
+        self._factory = runnermodel.CodeRunnerModelFactory()
+        self._p.register_state_model_fty('OnlineOfflineModified', self._factory)
         self._app = bottle.Bottle()
         self._host = host
         self._port = port
@@ -54,6 +55,9 @@ class CodeRunnerProcess(object):
             stdout result of running the program
         """
         logging.info('New request to {0}:{1}'.format(self._host, self._port))
+        bottle.response.add_header('Content-Type', 'text/plain')
+        if not self._can_serve():
+            return '[ERROR] Not accepting program submissions\n'
         prog = str(bottle.request.forms.get('prog'))
         old_stdout = sys.stdout
         redirected_output = sys.stdout = cStringIO.StringIO()
@@ -62,8 +66,20 @@ class CodeRunnerProcess(object):
         except:
             print traceback.format_exc()
         sys.stdout = old_stdout
-        bottle.response.add_header('Content-Type', 'text/plain')
         return redirected_output.getvalue()
+
+    def _can_serve(self):
+        """
+        Check if this machine should serve requests
+
+        Returns:
+            True if requests are accepted, False otherwise
+        """
+        model = self._factory.get_state_model('coderunner_0')
+        if model.is_active():
+            return True
+        else:
+            return False
 
     def _route(self):
         """

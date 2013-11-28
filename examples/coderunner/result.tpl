@@ -7,7 +7,7 @@
         <!-- Bootstrap -->
         <link rel="stylesheet" href="static/bootstrap.min.css">
         <link rel="stylesheet" href="static/bootstrap-theme.min.css">
-        <link rel="stylesheet" href="static/highlight-default.css">
+        <link rel="stylesheet" href="static/highlight-magula.css">
     </head>
     <body>
         <div class="container">

@@ -1,6 +1,7 @@
 import argparse
 import bottle
 import logging
+import os
 import random
 import re
 import urllib
@@ -37,7 +38,7 @@ class CodeRunner(object):
         """
         self._conn.connect()
         self._s = self._conn.spectate(self._resource)
-        self._app.run(host=self._host, port=self._port)
+        self._app.run(host='0.0.0.0', port=self._port)
 
     def stop(self):
         """
@@ -74,8 +75,21 @@ class CodeRunner(object):
             participants = self._s.get_participants('ONLINE')
             if len(participants) > 0:
                 pattern = random.sample(participants, 1)[0]['id']
-        bottle.response.add_header('Content-Type', 'text/plain')
-        return self._run_on_nodes(prog, pattern)
+        outputs = self._run_on_nodes(prog, pattern)
+        return bottle.template('result', results=outputs, prog=prog)
+
+    def static_files(self, filename):
+        """
+        Static route to files
+
+        Args:
+            filename: name of the static file
+
+        Returns:
+            a file handle
+        """
+        path = os.path.dirname(os.path.realpath(__file__)) + '/static'
+        return bottle.static_file(filename, root=path)
 
     def _run_on_nodes(self, prog, pattern):
         """
@@ -88,19 +102,20 @@ class CodeRunner(object):
         Returns:
             The aggregate output
         """
-        output = ''
+        outputs = []
         pattern = re.compile(pattern, re.IGNORECASE)
         participants = self._s.get_participants('ONLINE')
         for participant in participants:
             if pattern.match(participant['id']):
-                output += 'Output from {0}:\n'.format(participant['id'])
+                label = participant['id']
                 host = participant['simpleFields']['HELIX_HOST']
                 port = participant['simpleFields']['HELIX_PORT']
                 values = {'prog': prog}
                 data = urllib.urlencode(values)
                 result = urllib2.urlopen('http://{0}:{1}/run'.format(host, port), data)
-                output += result.read() + '\n\n'
-        return output
+                output = label, result.read()
+                outputs.append(output)
+        return outputs
 
     def _route(self):
         """
@@ -108,6 +123,7 @@ class CodeRunner(object):
         """
         self._app.route('/', callback=self.show_index)
         self._app.route('/run', method='POST', callback=self.run_program)
+        self._app.route('/static/<filename>', callback=self.static_files)
 
 
 if __name__ == '__main__':

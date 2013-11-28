@@ -39,7 +39,7 @@ class CodeRunnerProcess(object):
         Start the CodeRunnerProcess
         """
         self._p.connect()
-        self._app.run(host=self._host, port=self._port)
+        self._app.run(host='0.0.0.0', port=self._port)
 
     def stop(self):
         """

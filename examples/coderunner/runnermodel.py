@@ -36,7 +36,7 @@ class CodeRunnerModel(statemodel.StateModel):
     def on_become_offline_from_error(self, message):
         partition_name = message['simpleFields']['PARTITION_NAME']
         self._active = False
-        print('{0}: on become dropped from offline'.format(partition_name))
+        print('{0}: on become offline from error'.format(partition_name))
 
 class CodeRunnerModelFactory(statemodel.StateModelFactory):
     """

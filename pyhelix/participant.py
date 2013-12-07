@@ -33,20 +33,32 @@ class Participant(object):
         self._connected = False
         self._state_model_ftys = {}
         self._executor = helixexec.HelixExecutor(self._state_model_ftys, self)
+        self._pre_connect_callbacks = set()
 
     def connect(self):
         """
         Establish a connection.
         """
+        # Connect to ZK
         self._client.start()
+
+        # Register with the cluster
         result = self._ensure_participant_config()
         if not result:
             logging.error('Participant configuration could not be added')
             self.disconnect()
             return
+
+        # Get ready to receive cluster messages
         self._register_message_callback(self._executor.on_message)
         self._accessor.watch_children(self._builder.messages(self._participant_id),
             self._message_handler)
+
+        # Invoke pre-connect callbacks
+        for pre_connect_callback in self._pre_connect_callbacks:
+            pre_connect_callback()
+
+        # Create an ephemeral node
         result = self._create_live_instance_node()
         if not result:
             logging.error('Could not create live instance')
@@ -104,14 +116,14 @@ class Participant(object):
             return None
         return str(self._client.client_id[0])
 
-    def _register_message_callback(self, callback):
+    def register_pre_connect_callback(self, callback):
         """
-        Register a callback for messages to this participant (private)
+        Add a callback that will be invoked just prior to this participant joining.
 
         Args:
-            callback: A function that takes a list of message IDs as an argument.
+            callback: A function that takes no arguments
         """
-        self._callbacks.add(callback)
+        self._pre_connect_callbacks.add(callback)
 
     def register_state_model_fty(self, state_model_name, state_model_fty):
         """
@@ -124,7 +136,22 @@ class Participant(object):
         self._state_model_ftys[state_model_name] = state_model_fty
 
     def unregister_state_model_fty(self, state_model_name):
+        """
+        Unregister a state model factory.
+
+        Args:
+            state_model_name: The state model for which transitions will not be processed.
+        """
         self._state_model_ftys.pop(state_model_name)
+
+    def _register_message_callback(self, callback):
+        """
+        Register a callback for messages to this participant (private)
+
+        Args:
+            callback: A function that takes a list of message IDs as an argument.
+        """
+        self._callbacks.add(callback)
 
     def _ensure_participant_config(self):
         """

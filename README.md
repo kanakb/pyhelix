@@ -32,3 +32,4 @@ p.connect()
 # Disconnect
 p.disconnect()
 ```
+[![Build Status](https://travis-ci.org/kanakb/pyhelix.png?branch=master)](https://travis-ci.org/kanakb/pyhelix)

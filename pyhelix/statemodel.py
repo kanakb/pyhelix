@@ -19,7 +19,7 @@ class StateModelParser(object):
         """
         method_name = 'on_become_' + to_state.lower() + '_from_' + from_state.lower()
         logging.debug('method_name: {0}'.format(method_name))
-        return getattr(clazz, method_name)
+        return getattr(clazz, method_name, clazz.default_transition_handler)
 
 class StateModel(object):
     """
@@ -42,6 +42,17 @@ class StateModel(object):
             Current state string for this partition
         """
         return self._current_state
+
+    def default_transition_handler(self, message):
+        """
+        Default method used when no method is available to handle the transition
+
+        Args:
+            message: the transition message
+        """
+        from_state = message['simpleFields']['FROM_STATE']
+        to_state = message['simpleFields']['TO_STATE']
+        logging.warn('No method found for {0}-{1}'.format(from_state, to_state))
 
 class MockStateModel(StateModel):
     """

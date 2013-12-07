@@ -37,6 +37,7 @@ class HelixTask(object):
         method_to_invoke = self._state_model_parser.get_method_for_transition(self._state_model, from_state, to_state)
         logging.info('method_to_invoke: {0}'.format(str(method_to_invoke)))
         method_to_invoke(self._message)
+        self._state_model._current_state = to_state
 
         # update current-state, then remove message
         sub = False

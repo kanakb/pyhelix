@@ -26,54 +26,32 @@ class Participant(object):
         self._port = port
         self._participant_id = '{0}_{1}'.format(host, port)
         self._client = kazoo.client.KazooClient(zk_addrs)
+        self._client.add_listener(self._connection_listener)
         self._accessor = accessor.DataAccessor(cluster_id, self._client)
         self._builder = self._accessor.get_key_builder()
         self._callbacks = set()
-        self._session_id = None
-        self._connected = False
         self._state_model_ftys = {}
         self._executor = helixexec.HelixExecutor(self._state_model_ftys, self)
         self._pre_connect_callbacks = set()
+        self._is_lost = False
 
     def connect(self):
         """
         Establish a connection.
         """
         # Connect to ZK
+        self._is_lost = False
         self._client.start()
-
-        # Register with the cluster
-        result = self._ensure_participant_config()
-        if not result:
-            logging.error('Participant configuration could not be added')
-            self.disconnect()
-            return
-
-        # Get ready to receive cluster messages
-        self._register_message_callback(self._executor.on_message)
-        self._accessor.watch_children(self._builder.messages(self._participant_id),
-            self._message_handler)
-
-        # Invoke pre-connect callbacks
-        for pre_connect_callback in self._pre_connect_callbacks:
-            pre_connect_callback()
-
-        # Create an ephemeral node
-        result = self._create_live_instance_node()
-        if not result:
-            logging.error('Could not create live instance')
-            self.disconnect()
-            return
-        self._connected = True
+        self._init()
 
     def disconnect(self):
         """
         End an active connection.
         """
+        self._is_lost = True
         self._accessor.remove(self._builder.live_instance(self._participant_id))
-        self._callbacks = set()
         self._client.stop()
-        self._connected = False
+        self._client.close()
 
     def is_connected(self):
         """
@@ -82,9 +60,7 @@ class Participant(object):
         Returns:
             True if connected, False if disconnected
         """
-        if not self._client.connected:
-            self._connected = False
-        return self._connected
+        return self._client.connected
 
     def get_accessor(self):
         """
@@ -206,7 +182,7 @@ class Participant(object):
 
     def _message_handler(self, messages):
         """
-        Dispatcher for message callbacks.
+        Dispatcher for message callbacks (private)
 
         Args:
             List of message ids as strings
@@ -222,3 +198,43 @@ class Participant(object):
                     message_id)))
             cb(message_nodes)
         return True
+
+    def _connection_listener(self, state):
+        """
+        Callback for connection state changes (private)
+
+        Args:
+            state: the current connection state (LOST, CONNECTED, SUSPENDED)
+        """
+        if state == kazoo.client.KazooState.LOST:
+            self._is_lost = True
+        elif self._is_lost and state == kazoo.client.KazooState.CONNECTED:
+            self._client.handler.spawn(self._init)
+            self._is_lost = False
+
+    def _init(self):
+        """
+        Internal initialization (private)
+        """
+        # Register with the cluster
+        result = self._ensure_participant_config()
+        if not result:
+            logging.error('Participant configuration could not be added')
+            self.disconnect()
+            return
+
+        # Get ready to receive cluster messages
+        self._register_message_callback(self._executor.on_message)
+        self._accessor.watch_children(self._builder.messages(self._participant_id),
+            self._message_handler)
+
+        # Invoke pre-connect callbacks
+        for pre_connect_callback in self._pre_connect_callbacks:
+            pre_connect_callback()
+
+        # Create an ephemeral node
+        result = self._create_live_instance_node()
+        if not result:
+            logging.error('Could not create live instance')
+            self.disconnect()
+            return

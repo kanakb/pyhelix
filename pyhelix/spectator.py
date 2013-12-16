@@ -20,27 +20,27 @@ class SpectatorConnection(object):
         """
         self._cluster_id = cluster_id
         self._client = kazoo.client.KazooClient(zk_addrs)
+        self._client.add_listener(self._connection_listener)
         self._accessor = accessor.DataAccessor(cluster_id, self._client)
         self._keybuilder = self._accessor.get_key_builder()
-        self._connected = False
         self._spectators = {}
         self._participants = {}
+        self._is_lost = False
 
     def connect(self):
         """
         Establish a connection
         """
+        self._is_lost = False
         self._client.start()
-        self._accessor.watch_children(self._keybuilder.participant_configs(),
-            self._pc_parent_watcher)
-        self._connected = True
+        self._init()
 
     def disconnect(self):
         """
         End an active connection
         """
+        self._is_lost = True
         self._client.stop()
-        self._connected = False
 
     def is_connected(self):
         """
@@ -49,7 +49,7 @@ class SpectatorConnection(object):
         Returns:
             True if connected, False otherwise
         """
-        return self._connected
+        return self._client.connected
 
     def spectate(self, resource_id):
         """
@@ -61,13 +61,15 @@ class SpectatorConnection(object):
         Returns:
             A Spectator object
         """
-        if not self._connected:
+        if not self.is_connected():
             logging.error('Tried to spectate on {0} without connecting!'.format(resource_id))
             return None
         if resource_id in self._spectators:
             return self._spectators[resource_id]
         logging.debug('About to start watching {0}'.format(resource_id))
-        return Spectator(self._accessor, resource_id, self._participants)
+        s = Spectator(self._accessor, resource_id, self._participants)
+        self._spectators[resource_id] = s
+        return s
 
     def get_accessor(self):
         """
@@ -115,6 +117,30 @@ class SpectatorConnection(object):
             self._participants[participant_config['id']] = participant_config
         return True
 
+    def _connection_listener(self, state):
+        """
+        Callback for connection state changes (private)
+
+        Args:
+            state: the current connection state (LOST, CONNECTED, SUSPENDED)
+        """
+        if state == kazoo.client.KazooState.LOST:
+            self._is_lost = True
+        elif self._is_lost and state == kazoo.client.KazooState.CONNECTED:
+            self._client.handler.spawn(self._init)
+            self._is_lost = False
+
+    def _init(self):
+        """
+        Internal initialization (private)
+        """
+        self._participants.clear()
+        self._accessor.watch_children(self._keybuilder.participant_configs(),
+            self._pc_parent_watcher)
+        for resource_id, s in self._spectators.iteritems():
+            s._init(resource_id)
+
+
 class Spectator(object):
     """
     Helix spectator
@@ -132,7 +158,7 @@ class Spectator(object):
         self._participants = participants
         self._accessor = accessor
         self._keybuilder = accessor.get_key_builder()
-        accessor.watch_property(self._keybuilder.external_view(resource_id), self._ev_watcher)
+        self._init(resource_id)
 
     def get_participants(self, state, partition_id=None):
         """
@@ -193,3 +219,14 @@ class Spectator(object):
             self._mapping = {}
         logging.debug('Updated external view: {0}'.format(self._mapping))
         return True
+
+    def _init(self, resource_id):
+        """
+        Internal initialization (private)
+
+        Args:
+            resource_id: The resource to spectate on
+        """
+        self._accessor.watch_property(self._keybuilder.external_view(resource_id), self._ev_watcher)
+
+

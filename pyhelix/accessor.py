@@ -223,7 +223,7 @@ class DataAccessor(object):
         """
         path = key['path']
         try:
-            return self._client.exists(path)
+            return self._client.exists(path) is not None
         except kazoo.exceptions.KazooException:
             logging.error(path)
             logging.error(traceback.format_exc())

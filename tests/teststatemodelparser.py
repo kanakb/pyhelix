@@ -12,6 +12,10 @@ class MockStateModel(statemodel.StateModel):
         self.default_invoked = True
 
 class TestStateModelParser(unittest.TestCase):
+    """
+    These tests are to make sure that functions are invoked properly based on transition messages.
+    """
+
     def setUp(self):
         self._state_model = MockStateModel()
         self._parser = statemodel.StateModelParser()

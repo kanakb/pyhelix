@@ -28,7 +28,7 @@ class TestMockKazooClient(unittest.TestCase):
         result = self.c.create(path, 'testData')
         self.assertEqual(result, path)
         data, metadata = self.c.get(path)
-        self.assertIsNotNone(metadata)
+        self.assertTrue(metadata is not None)
         self.assertEqual(data, 'testData')
 
     def test_create_recursive(self):
@@ -68,13 +68,13 @@ class TestMockKazooClient(unittest.TestCase):
         path = '/one/two/three/four'
         self.c.ensure_path(path)
         data, metadata = self.c.get('/one')
-        self.assertIsNotNone(metadata)
+        self.assertTrue(metadata is not None)
         data, metadata = self.c.get('/one/two')
-        self.assertIsNotNone(metadata)
+        self.assertTrue(metadata is not None)
         data, metadata = self.c.get('/one/two/three')
-        self.assertIsNotNone(metadata)
+        self.assertTrue(metadata is not None)
         data, metadata = self.c.get('/one/two/three/four')
-        self.assertIsNotNone(metadata)
+        self.assertTrue(metadata is not None)
         self.assertTrue(self.c.exists('/one'))
         self.assertTrue(self.c.exists('/one/two'))
         self.assertTrue(self.c.exists('/one/two/three'))
@@ -109,11 +109,11 @@ class TestMockKazooClient(unittest.TestCase):
         self.c.create('/one/two', 'twodata')
         self.c.create('/one/three', 'threedata')
         children = self.c.get_children('/one')
-        self.assertIn('/one/two', children)
-        self.assertIn('/one/three', children)
-        self.assertNotIn('/one', children)
-        self.assertNotIn('/outside', children)
-        self.assertNotIn('/outside/a', children)
+        self.assertTrue('/one/two' in children)
+        self.assertTrue('/one/three' in children)
+        self.assertTrue('/one' not in children)
+        self.assertTrue('/outside' not in children)
+        self.assertTrue('/outside/a' not in children)
         self.assertEqual(len(children), 2)
 
     def test_basic_set(self):
@@ -126,7 +126,7 @@ class TestMockKazooClient(unittest.TestCase):
         self.c.set(path, 'updated')
         data, metadata = self.c.get(path)
         self.assertEqual(data, 'updated')
-        self.assertIsNotNone(metadata)
+        self.assertTrue(metadata is not None)
 
     def test_set_version_mismatch(self):
         """

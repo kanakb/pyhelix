@@ -6,7 +6,7 @@ def readme():
 
 setuptools.setup(
     name='pyhelix',
-    version='0.2',
+    version='0.3',
     description='Python bindings for Apache Helix',
     long_description='Support for creating Helix participants in Python. Register a state model, connect, and go!',
     url='http://github.com/kanakb/pyhelix',

@@ -12,7 +12,7 @@ class Participant(object):
 
     This class encompasses all of a Helix participant's interactions with ZooKeeper.
     """
-    def __init__(self, cluster_id, host, port, zk_addrs):
+    def __init__(self, cluster_id, host, port, zk_addrs, participant_id=None):
         """
         Initialize the connection parameters.
 
@@ -21,10 +21,14 @@ class Participant(object):
             host: Host of this participant
             port: Logical port of this participant
             zk_addrs: Comma separated host:port of ZooKeeper servers
+            participant_id: (Optional) Custom participant id -- this is "host_port" by default
         """
         self._host = host
         self._port = port
-        self._participant_id = '{0}_{1}'.format(host, port)
+        if participant_id:
+            self._participant_id = participant_id
+        else:
+            self._participant_id = '{0}_{1}'.format(host, port)
         self._client = kazoo.client.KazooClient(zk_addrs)
         self._client.add_listener(self._connection_listener)
         self._accessor = accessor.DataAccessor(cluster_id, self._client)

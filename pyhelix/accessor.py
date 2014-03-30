@@ -137,7 +137,7 @@ class DataAccessor(object):
                 exists_stat = self._client.exists(path)
                 if not exists_stat:
                     if key['update_only_on_exists'] or sub:
-                        logging.warn('{0} does not exist, cannot update'.format(path))
+                        logging.info('{0} does not exist, cannot update'.format(path))
                         return False
                     try:
                         node = updated_value
@@ -259,4 +259,3 @@ class DataAccessor(object):
             KeyBuilder instance
         """
         return keybuilder.KeyBuilder(self._cluster_id)
-

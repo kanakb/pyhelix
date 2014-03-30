@@ -1,5 +1,6 @@
 from concurrent import futures
 import logging
+import time
 
 import helixtask
 import znode
@@ -32,27 +33,42 @@ class HelixExecutor(object):
             messages: Message ZNodes
         """
         for message in messages:
+            # Skip bad messages
             if not message or not message['simpleFields'] or not message['simpleFields']['MSG_TYPE']:
                 continue
+
+            # Skip messages that aren't transition messages
             if message['simpleFields']['MSG_TYPE'].upper() != 'STATE_TRANSITION':
                 continue
+
+            # Remove messages that aren't for this session
+            tgt_session_id = message['simpleFields']['TGT_SESSION_ID']
+            session_id = self._participant.get_session_id()
+            if tgt_session_id != session_id:
+                logging.warn('Message {0} has target session id {1}, expected {2}'.format(
+                    message['id'], tgt_session_id, session_id))
+                self._accessor.remove(self._builder.message(self._participant_id, message['id']))
+                continue
+
+            # Skip messages that are already read
             if message['simpleFields']['MSG_STATE'].upper() != 'NEW':
                 continue
+
+            # Get the state model, instantiating if it doesn't exist
             state_model_name = message['simpleFields']['STATE_MODEL_DEF']
             state_model_fty = self._state_model_ftys[state_model_name]
-
             partition_name = message['simpleFields']['PARTITION_NAME']
             state_model = state_model_fty.get_state_model(partition_name)
             if state_model == None:
                 state_model = state_model_fty.create_state_model(partition_name)
                 state_model_fty.put_state_model(partition_name, state_model)
 
+            # Update message to READ
+            message['simpleFields']['MSG_STATE'] = 'READ'
+            message['simpleFields']['READ_TIMESTAMP'] = '{0}'.format(int(time.time() * 1000))
+            message['simpleFields']['EXE_SESSION_ID'] = self._participant.get_session_id()
+            self._accessor.update(self._builder.message(self._participant_id, message['id']), message)
+
+            # Schedule the transition for processing
             task = helixtask.HelixTask(message, state_model, self._participant)
             self._threadpool.submit(task.call)
-
-        # update messages to read
-        for message in messages:
-            if not message or not message['simpleFields']:
-                continue
-            message['simpleFields']['MSG_STATE'] = 'READ'
-            self._accessor.set(self._builder.message(self._participant_id, message['id']), message)

@@ -10,7 +10,9 @@ class HelixExecutor(object):
     Helix executor that listens on transition messages and schedule transition tasks
     """
 
-    def __init__(self, state_model_ftys, participant):
+    DEFAULT_PARALLELISM = 20
+
+    def __init__(self, state_model_ftys, participant, num_concurrent=None):
         """
         Initialize the executor
 
@@ -18,7 +20,9 @@ class HelixExecutor(object):
             state_model_ftys: An iterable collection of state model factories
             participant: A Helix participant object
         """
-        self._threadpool = futures.ThreadPoolExecutor(1)
+        if not num_concurrent:
+            num_concurrent = self.DEFAULT_PARALLELISM
+        self._threadpool = futures.ThreadPoolExecutor(num_concurrent)
         self._state_model_ftys = state_model_ftys
         self._accessor = participant.get_accessor()
         self._builder = self._accessor.get_key_builder()

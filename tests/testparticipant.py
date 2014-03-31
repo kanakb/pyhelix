@@ -1,6 +1,6 @@
 import unittest
 
-from pyhelix import participant
+import pyhelix.participant as participant
 
 
 class TestParticipant(unittest.TestCase):

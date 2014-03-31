@@ -75,7 +75,7 @@ class MockKazooClient(object):
         self.store[path] = None
 
     def exists(self, path):
-        return path in self.store
+        return path if path in self.store else None
 
     def get(self, path):
         # TODO: manage versions internally better

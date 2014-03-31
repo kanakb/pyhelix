@@ -1,6 +1,6 @@
 import unittest
 
-from pyhelix import statemodel
+import pyhelix.statemodel as statemodel
 
 
 class MockStateModel(statemodel.StateModel):

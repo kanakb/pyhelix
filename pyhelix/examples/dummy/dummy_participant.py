@@ -2,8 +2,8 @@ import argparse
 import logging
 import threading
 
-from pyhelix import participant
-from pyhelix import statemodel
+import pyhelix.participant as participant
+import pyhelix.statemodel as statemodel
 
 logging.basicConfig(level=logging.WARN)
 

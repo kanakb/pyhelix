@@ -1,5 +1,6 @@
 import setuptools
-from pyhelix import constants
+
+import pyhelix.constants as constants
 
 
 def readme():

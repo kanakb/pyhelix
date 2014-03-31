@@ -3,8 +3,7 @@ import logging
 import threading
 import time
 
-from pyhelix import spectator
-from pyhelix import statemodel
+import pyhelix.spectator as spectator
 
 logging.basicConfig(level=logging.WARN)
 

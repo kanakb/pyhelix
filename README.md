@@ -17,8 +17,8 @@ Start a participant:
 
 ```python
 # Imports
-from pyhelix import participant
-from pyhelix import statemodel
+import pyhelix.participant as participant
+import pyhelix.statemodel as statemodel
 
 # Define a participant
 p = participant.Participant('test-cluster', 'myhost', 12120, 'zkhost:2181')

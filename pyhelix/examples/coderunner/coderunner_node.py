@@ -6,7 +6,7 @@ import sys
 import time
 import traceback
 
-from pyhelix import participant
+import pyhelix.participant as participant
 
 import runnermodel
 

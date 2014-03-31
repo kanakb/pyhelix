@@ -1,4 +1,4 @@
-from concurrent import futures
+import concurrent.futures as futures
 import logging
 import time
 

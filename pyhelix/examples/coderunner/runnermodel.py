@@ -1,4 +1,4 @@
-from pyhelix import statemodel
+import pyhelix.statemodel as statemodel
 
 
 class CodeRunnerModel(statemodel.StateModel):

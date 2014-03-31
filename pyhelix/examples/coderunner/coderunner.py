@@ -7,7 +7,7 @@ import re
 import urllib
 import urllib2
 
-from pyhelix import spectator
+import pyhelix.spectator as spectator
 
 
 class CodeRunner(object):

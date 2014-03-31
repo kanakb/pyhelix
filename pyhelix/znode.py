@@ -8,4 +8,5 @@ def get_empty_znode(node_id):
     Returns:
         A dictionary representing a ZNRecord
     """
-    return {'id': node_id, 'simpleFields': {}, 'listFields': {}, 'mapFields': {}}
+    return {
+        'id': node_id, 'simpleFields': {}, 'listFields': {}, 'mapFields': {}}

@@ -14,7 +14,8 @@ class TestParticipant(unittest.TestCase):
         """
         host = 'localhost'
         port = 123
-        p = participant.Participant('test-cluster', host, port, 'localhost:2181')
+        p = participant.Participant(
+            'test-cluster', host, port, 'localhost:2181')
         self.assertEqual(p._participant_id, '{0}_{1}'.format(host, port))
 
     def test_custom_id(self):
@@ -24,6 +25,7 @@ class TestParticipant(unittest.TestCase):
         host = 'localhost'
         port = 123
         participant_id = 'myid'
-        p = participant.Participant('test-cluster', host, port, 'localhost:2181',
+        p = participant.Participant(
+            'test-cluster', host, port, 'localhost:2181',
             participant_id=participant_id)
         self.assertEqual(p._participant_id, participant_id)

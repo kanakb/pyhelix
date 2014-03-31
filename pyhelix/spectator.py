@@ -4,11 +4,12 @@ import logging
 
 import accessor
 
+
 class SpectatorConnection(object):
     """
     Helix spectator connection
 
-    This class encompasses all of a Helix spectator's interactions with ZooKeeper.
+    This class encompasses all of a spectator's interactions with ZooKeeper.
     """
     def __init__(self, cluster_id, zk_addrs):
         """
@@ -62,7 +63,9 @@ class SpectatorConnection(object):
             A Spectator object
         """
         if not self.is_connected():
-            logging.error('Tried to spectate on {0} without connecting!'.format(resource_id))
+            logging.error(
+                'Tried to spectate on {0} without connecting!'.format(
+                    resource_id))
             return None
         if resource_id in self._spectators:
             return self._spectators[resource_id]
@@ -95,7 +98,8 @@ class SpectatorConnection(object):
         for child in children:
             if child not in self._participants:
                 # Watch each participant config
-                self._accessor.watch_property(self._keybuilder.participant_config(child),
+                self._accessor.watch_property(
+                    self._keybuilder.participant_config(child),
                     self._pc_watcher)
         return True
 
@@ -135,8 +139,8 @@ class SpectatorConnection(object):
         Internal initialization (private)
         """
         self._participants.clear()
-        self._accessor.watch_children(self._keybuilder.participant_configs(),
-            self._pc_parent_watcher)
+        self._accessor.watch_children(
+            self._keybuilder.participant_configs(), self._pc_parent_watcher)
         for resource_id, s in self._spectators.iteritems():
             s._init(resource_id)
 
@@ -213,7 +217,8 @@ class Spectator(object):
             self._mapping = {}
             return True
         external_view = json.loads(data)
-        if external_view and 'mapFields' in external_view and external_view['mapFields']:
+        if (external_view and
+           'mapFields' in external_view and external_view['mapFields']):
             self._mapping = external_view['mapFields']
         else:
             self._mapping = {}
@@ -227,6 +232,5 @@ class Spectator(object):
         Args:
             resource_id: The resource to spectate on
         """
-        self._accessor.watch_property(self._keybuilder.external_view(resource_id), self._ev_watcher)
-
-
+        self._accessor.watch_property(
+            self._keybuilder.external_view(resource_id), self._ev_watcher)

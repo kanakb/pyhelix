@@ -1,5 +1,6 @@
 from pyhelix import statemodel
 
+
 class CodeRunnerModel(statemodel.StateModel):
     """
     State model for an online-offline code runner set
@@ -37,6 +38,7 @@ class CodeRunnerModel(statemodel.StateModel):
         partition_name = message['simpleFields']['PARTITION_NAME']
         self._active = False
         print('{0}: on become offline from error'.format(partition_name))
+
 
 class CodeRunnerModelFactory(statemodel.StateModelFactory):
     """

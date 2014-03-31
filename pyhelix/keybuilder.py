@@ -1,5 +1,5 @@
 def propertykey(ephemeral=False, sequential=False, merge_on_update=False,
-    update_only_on_exists=False):
+                update_only_on_exists=False):
     def decorator(func):
         def hidden_func(*args, **kwargs):
             prop = {'ephemeral': ephemeral,
@@ -10,6 +10,7 @@ def propertykey(ephemeral=False, sequential=False, merge_on_update=False,
             return prop
         return hidden_func
     return decorator
+
 
 class KeyBuilder(object):
     """
@@ -44,7 +45,8 @@ class KeyBuilder(object):
 
     @propertykey()
     def participant_config(self, participant_id):
-        return '/{0}/CONFIGS/PARTICIPANT/{1}'.format(self._cluster_id, participant_id)
+        return '/{0}/CONFIGS/PARTICIPANT/{1}'.format(
+            self._cluster_id, participant_id)
 
     @propertykey()
     def live_instances(self):
@@ -56,32 +58,36 @@ class KeyBuilder(object):
 
     @propertykey(ephemeral=True)
     def live_instance(self, participant_id):
-        return '/{0}/LIVEINSTANCES/{1}'.format(self._cluster_id, participant_id)
+        return '/{0}/LIVEINSTANCES/{1}'.format(
+            self._cluster_id, participant_id)
 
     @propertykey()
     def current_states(self, participant_id, session_id=None):
-        path = '/{0}/INSTANCES/{1}/CURRENTSTATES'.format(self._cluster_id, participant_id,
-            session_id)
+        path = '/{0}/INSTANCES/{1}/CURRENTSTATES'.format(
+            self._cluster_id, participant_id, session_id)
         if session_id:
             path += '/{0}'.format(session_id)
         return path
 
     @propertykey(merge_on_update=True)
     def current_state(self, participant_id, session_id, resource_id):
-        return '/{0}/INSTANCES/{1}/CURRENTSTATES/{2}/{3}'.format(self._cluster_id, participant_id,
-            session_id, resource_id)
+        return '/{0}/INSTANCES/{1}/CURRENTSTATES/{2}/{3}'.format(
+            self._cluster_id, participant_id, session_id, resource_id)
 
     @propertykey(merge_on_update=True)
     def errors(self, participant_id):
-        return '/{0}/INSTANCES/{1}/ERRORS'.format(self._cluster_id, participant_id)
+        return '/{0}/INSTANCES/{1}/ERRORS'.format(
+            self._cluster_id, participant_id)
 
     @propertykey(merge_on_update=True)
     def health_report(self, participant_id):
-        return '/{0}/INSTANCES/{1}/HEALTHREPORT'.format(self._cluster_id, participant_id)
+        return '/{0}/INSTANCES/{1}/HEALTHREPORT'.format(
+            self._cluster_id, participant_id)
 
     @propertykey()
     def status_updates(self, participant_id):
-        return '/{0}/INSTANCES/{1}/STATUSUPDATES'.format(self._cluster_id, participant_id)
+        return '/{0}/INSTANCES/{1}/STATUSUPDATES'.format(
+            self._cluster_id, participant_id)
 
     @propertykey()
     def state_models(self):
@@ -93,9 +99,10 @@ class KeyBuilder(object):
 
     @propertykey()
     def messages(self, participant_id):
-        return '/{0}/INSTANCES/{1}/MESSAGES'.format(self._cluster_id, participant_id)
+        return '/{0}/INSTANCES/{1}/MESSAGES'.format(
+            self._cluster_id, participant_id)
 
     @propertykey(merge_on_update=True, update_only_on_exists=True)
     def message(self, participant_id, message_id):
-        return '/{0}/INSTANCES/{1}/MESSAGES/{2}'.format(self._cluster_id, participant_id,
-            message_id)
+        return '/{0}/INSTANCES/{1}/MESSAGES/{2}'.format(
+            self._cluster_id, participant_id, message_id)

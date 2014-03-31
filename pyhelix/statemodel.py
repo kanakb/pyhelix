@@ -1,5 +1,6 @@
 import logging
 
+
 class StateModelParser(object):
     """
     State model helper
@@ -17,9 +18,11 @@ class StateModelParser(object):
         Returns:
             The method to call
         """
-        method_name = 'on_become_' + to_state.lower() + '_from_' + from_state.lower()
+        method_name = (
+            'on_become_' + to_state.lower() + '_from_' + from_state.lower())
         logging.debug('method_name: {0}'.format(method_name))
         return getattr(clazz, method_name, clazz.default_transition_handler)
+
 
 class StateModel(object):
     """
@@ -45,14 +48,16 @@ class StateModel(object):
 
     def default_transition_handler(self, message):
         """
-        Default method used when no method is available to handle the transition
+        Default method for when no method is available to handle the transition
 
         Args:
             message: the transition message
         """
         from_state = message['simpleFields']['FROM_STATE']
         to_state = message['simpleFields']['TO_STATE']
-        logging.warn('No method found for {0}-{1}'.format(from_state, to_state))
+        logging.warn(
+            'No method found for {0}-{1}'.format(from_state, to_state))
+
 
 class MockStateModel(StateModel):
     """
@@ -78,6 +83,7 @@ class MockStateModel(StateModel):
     def on_become_dropped_from_offline(self, message):
         partition_name = message['simpleFields']['PARTITION_NAME']
         print('{0}: on become dropped from offline'.format(partition_name))
+
 
 class StateModelFactory(object):
     """
@@ -119,6 +125,7 @@ class StateModelFactory(object):
         if partition_name in self._state_models:
             return self._state_models[partition_name]
         return None
+
 
 class MockStateModelFactory(StateModelFactory):
     """

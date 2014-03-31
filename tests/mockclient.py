@@ -1,10 +1,12 @@
 import kazoo.client
 import kazoo.exceptions
 
+
 class MockStruct(object):
     """
     Basic object to allow adding arbitrary properties
     """
+
 
 class MockKazooClient(object):
     """
@@ -40,7 +42,8 @@ class MockKazooClient(object):
     def close(self):
         pass
 
-    def create(self, path, data, ephemeral=False, sequence=False, makepath=False):
+    def create(self, path, data, ephemeral=False, sequence=False,
+               makepath=False):
         # TODO: sequence not implemented
         if path in self.store or path == '/':
             raise kazoo.exceptions.NodeExistsError
@@ -136,4 +139,3 @@ class MockKazooClient(object):
 
     def remove_listener(self, unused):
         pass
-

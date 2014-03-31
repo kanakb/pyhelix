@@ -12,6 +12,7 @@ import runnermodel
 
 logging.basicConfig(level=logging.WARN)
 
+
 class CodeRunnerProcess(object):
     """
     A class that makes a node that runs code available
@@ -28,7 +29,8 @@ class CodeRunnerProcess(object):
         """
         self._p = participant.Participant(cluster, host, port, zk_svr)
         self._factory = runnermodel.CodeRunnerModelFactory()
-        self._p.register_state_model_fty('OnlineOfflineModified', self._factory)
+        self._p.register_state_model_fty(
+            'OnlineOfflineModified', self._factory)
         self._app = bottle.Bottle()
         self._host = host
         self._port = port
@@ -90,10 +92,12 @@ class CodeRunnerProcess(object):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--zkSvr', required=True, type=str, help='host:port of ZooKeeper')
+    parser.add_argument(
+        '--zkSvr', required=True, type=str, help='host:port of ZooKeeper')
     parser.add_argument('--host', required=True, type=str, help='hostname')
     parser.add_argument('--port', required=True, type=str, help='port')
     args = parser.parse_args()
-    r = CodeRunnerProcess('coderunner-cluster', args.host, args.port, args.zkSvr)
+    r = CodeRunnerProcess(
+        'coderunner-cluster', args.host, args.port, args.zkSvr)
     r.start()
     r.stop()

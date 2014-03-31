@@ -7,6 +7,7 @@ import traceback
 
 import keybuilder
 
+
 class DataAccessor(object):
     """
     Helix property accessor
@@ -39,8 +40,9 @@ class DataAccessor(object):
             if data:
                 node = json.dumps(data, indent=2)
             logging.info('creating {0} with {1}'.format(path, data))
-            self._client.create(path, node, ephemeral=key['ephemeral'], sequence=key['sequential'],
-                makepath=True)
+            self._client.create(
+                path, node, ephemeral=key['ephemeral'],
+                sequence=key['sequential'], makepath=True)
             return True
         except kazoo.exceptions.NodeExistsError:
             logging.warn('{0} exists already'.format(path))
@@ -137,17 +139,19 @@ class DataAccessor(object):
                 exists_stat = self._client.exists(path)
                 if not exists_stat:
                     if key['update_only_on_exists'] or sub:
-                        logging.info('{0} does not exist, cannot update'.format(path))
+                        logging.info(
+                            '{0} does not exist, cannot update'.format(path))
                         return False
                     try:
                         node = updated_value
                         if updated_value:
                             node = json.dumps(updated_value, indent=2)
-                        self._client.create(path, node, ephemeral=key['ephemeral'],
+                        self._client.create(
+                            path, node, ephemeral=key['ephemeral'],
                             sequence=key['sequential'], makepath=True)
                         return True
                     except kazoo.exceptions.NodeExistsError:
-                        pass # ignore failure here
+                        pass  # ignore failure here
                 value, get_stat = self._client.get(path)
                 value = json.loads(value)
                 if key['merge_on_update']:
@@ -174,21 +178,23 @@ class DataAccessor(object):
                     value = updated_value
                 else:
                     # merge must be allowed to subtract
-                    logging.warn('Tried to do a subtract on a property that doesn\'t allow merge')
+                    logging.warn(
+                        'Tried to do a subtract on a property that'
+                        ' doesn\'t allow merge')
                     return False
                 value = json.dumps(value, indent=2)
-                update_stat = self._client.set(path, value, version=get_stat.version)
+                update_stat = self._client.set(
+                    path, value, version=get_stat.version)
                 if update_stat:
                     done = True
             except kazoo.exceptions.BadVersionError:
                 logging.info('trying again to update {0}'.format(path))
-                continue # ignore this, try again
+                continue  # ignore this, try again
             except kazoo.exceptions.KazooException:
                 logging.error(path)
                 logging.error(traceback.format_exc())
                 return False
         return True
-
 
     def remove(self, key):
         """

@@ -1,6 +1,7 @@
 import setuptools
 from pyhelix import constants
 
+
 def readme():
     with open('README.md') as f:
         return f.read()
@@ -9,7 +10,8 @@ setuptools.setup(
     name='pyhelix',
     version=str(constants.CURRENT_VERSION),
     description='Python bindings for Apache Helix',
-    long_description='Support for creating Helix participants in Python. Register a state model, connect, and go!',
+    long_description=('Support for creating Helix participants in Python.'
+                      ' Register a state model, connect, and go!'),
     url='http://github.com/kanakb/pyhelix',
     license='Apache License 2.0',
     packages=setuptools.find_packages(),

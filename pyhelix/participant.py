@@ -7,11 +7,13 @@ import constants
 import helixexec
 import znode
 
+
 class Participant(object):
     """
     Participant Helix connection
 
-    This class encompasses all of a Helix participant's interactions with ZooKeeper.
+    This class encompasses all of a Helix participant's interactions with
+    ZooKeeper.
     """
     def __init__(self, cluster_id, host, port, zk_addrs, participant_id=None):
         """
@@ -22,7 +24,7 @@ class Participant(object):
             host: Host of this participant
             port: Logical port of this participant
             zk_addrs: Comma separated host:port of ZooKeeper servers
-            participant_id: (Optional) Custom participant id -- this is "host_port" by default
+            participant_id: (Optional) Custom ID, "host_port" by default
         """
         self._host = host
         self._port = port
@@ -54,7 +56,8 @@ class Participant(object):
         End an active connection.
         """
         self._is_lost = True
-        self._accessor.remove(self._builder.live_instance(self._participant_id))
+        self._accessor.remove(
+            self._builder.live_instance(self._participant_id))
         self._client.stop()
         self._client.close()
 
@@ -99,7 +102,7 @@ class Participant(object):
 
     def register_pre_connect_callback(self, callback):
         """
-        Add a callback that will be invoked just prior to this participant joining.
+        Add a callback that will be invoked just prior to joining.
 
         Args:
             callback: A function that takes no arguments
@@ -121,7 +124,7 @@ class Participant(object):
         Unregister a state model factory.
 
         Args:
-            state_model_name: The state model for which transitions will not be processed.
+            state_model_name: The state model for which to ignore transitions
         """
         self._state_model_ftys.pop(state_model_name)
 
@@ -130,36 +133,45 @@ class Participant(object):
         Register a callback for messages to this participant (private)
 
         Args:
-            callback: A function that takes a list of message IDs as an argument.
+            callback: A function that takes a list of message IDs.
         """
         self._callbacks.add(callback)
 
     def _ensure_participant_config(self):
         """
-        Ensure that the ZNodes for a participant all exist - this is not atomic (private)
+        Ensure that ZNodes for a participant all exist, non-atomic (private)
 
         Returns:
             True if everything was persisted, False otherwise
         """
-        exists = self._accessor.exists(self._builder.participant_config(self._participant_id))
+        exists = self._accessor.exists(
+            self._builder.participant_config(self._participant_id))
         if not exists and self._auto_join_allowed():
             node = znode.get_empty_znode(self._participant_id)
-            node['simpleFields'] = {'HELIX_HOST': self._host, 'HELIX_PORT': str(self._port),
+            node['simpleFields'] = {
+                'HELIX_HOST': self._host, 'HELIX_PORT': str(self._port),
                 'HELIX_ENABLED': 'true'}
-            self._accessor.create(self._builder.participant_config(self._participant_id), node)
-            self._accessor.create(self._builder.instance(self._participant_id), b'')
-            self._accessor.create(self._builder.current_states(self._participant_id), b'')
-            self._accessor.create(self._builder.errors(self._participant_id), b'')
-            self._accessor.create(self._builder.health_report(self._participant_id), b'')
-            self._accessor.create(self._builder.messages(self._participant_id), b'')
-            self._accessor.create(self._builder.status_updates(self._participant_id), b'')
+            self._accessor.create(
+                self._builder.participant_config(self._participant_id), node)
+            self._accessor.create(
+                self._builder.instance(self._participant_id), b'')
+            self._accessor.create(
+                self._builder.current_states(self._participant_id), b'')
+            self._accessor.create(
+                self._builder.errors(self._participant_id), b'')
+            self._accessor.create(
+                self._builder.health_report(self._participant_id), b'')
+            self._accessor.create(
+                self._builder.messages(self._participant_id), b'')
+            self._accessor.create(
+                self._builder.status_updates(self._participant_id), b'')
         elif not exists:
             return False
         return True
 
     def _auto_join_allowed(self):
         """
-        Check if this cluster supports participants automatically joining (private)
+        Check if this cluster supports participants auto-joining (private)
 
         Returns:
             True if auto join allowed, False otherwise
@@ -167,7 +179,9 @@ class Participant(object):
         clst_config = self._accessor.get(self._builder.cluster_config())
         if clst_config:
             if 'allowParticipantAutoJoin' in clst_config['simpleFields']:
-                if clst_config['simpleFields']['allowParticipantAutoJoin'] == 'true':
+                auto_join = (
+                    clst_config['simpleFields']['allowParticipantAutoJoin'])
+                if auto_join == 'true':
                     return True
         return False
 
@@ -179,11 +193,12 @@ class Participant(object):
             True if created, False otherwise
         """
         node = znode.get_empty_znode(self._participant_id)
-        node['simpleFields'] = {'HELIX_VERSION': 'pyhelix-{0}'.format(constants.CURRENT_VERSION),
+        node['simpleFields'] = {
+            'HELIX_VERSION': 'pyhelix-{0}'.format(constants.CURRENT_VERSION),
             'SESSION_ID': str(self._client.client_id[0]),
             'LIVE_INSTANCE': '{0}@{1}'.format(os.getpid(), self._host)}
-        return self._accessor.create(self._builder.live_instance(self._participant_id),
-            node)
+        return self._accessor.create(
+            self._builder.live_instance(self._participant_id), node)
 
     def _message_handler(self, messages):
         """
@@ -199,8 +214,8 @@ class Participant(object):
         for cb in self._callbacks:
             message_nodes = []
             for message_id in messages:
-                message_nodes.append(self._accessor.get(self._builder.message(self._participant_id,
-                    message_id)))
+                message_nodes.append(self._accessor.get(
+                    self._builder.message(self._participant_id, message_id)))
             cb(message_nodes)
         return True
 
@@ -230,8 +245,8 @@ class Participant(object):
 
         # Get ready to receive cluster messages
         self._register_message_callback(self._executor.on_message)
-        self._accessor.watch_children(self._builder.messages(self._participant_id),
-            self._message_handler)
+        self._accessor.watch_children(self._builder.messages(
+            self._participant_id), self._message_handler)
 
         # Invoke pre-connect callbacks
         for pre_connect_callback in self._pre_connect_callbacks:

@@ -9,6 +9,7 @@ import urllib2
 
 from pyhelix import spectator
 
+
 class CodeRunner(object):
     """
     A class that will find nodes that run code and dispatch work
@@ -51,11 +52,12 @@ class CodeRunner(object):
         Called when the home page is requested
 
         Returns:
-            An HTML page with a box to input code and a menu to select where to run it
+            A page with a box to input code where to run it
         """
         participants = self._s.get_participants('ONLINE')
         participants = [p['id'] for p in participants]
-        return bottle.template('index', host=self._host, port=self._port,
+        return bottle.template(
+            'index', host=self._host, port=self._port,
             participants=participants)
 
     def run_program(self):
@@ -112,7 +114,8 @@ class CodeRunner(object):
                 port = participant['simpleFields']['HELIX_PORT']
                 values = {'prog': prog}
                 data = urllib.urlencode(values)
-                result = urllib2.urlopen('http://{0}:{1}/run'.format(host, port), data)
+                result = urllib2.urlopen(
+                    'http://{0}:{1}/run'.format(host, port), data)
                 output = label, result.read()
                 outputs.append(output)
         return outputs
@@ -128,10 +131,12 @@ class CodeRunner(object):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--zkSvr', required=True, type=str, help='host:port of ZooKeeper')
+    parser.add_argument(
+        '--zkSvr', required=True, type=str, help='host:port of ZooKeeper')
     parser.add_argument('--host', required=True, type=str, help='hostname')
     parser.add_argument('--port', required=True, type=str, help='port')
     args = parser.parse_args()
-    r = CodeRunner('coderunner-cluster', 'coderunner', args.host, args.port, args.zkSvr)
+    r = CodeRunner(
+        'coderunner-cluster', 'coderunner', args.host, args.port, args.zkSvr)
     r.start()
     r.stop()

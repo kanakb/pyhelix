@@ -3,9 +3,10 @@ import kazoo.exceptions
 
 import mockclient
 
+
 class TestMockKazooClient(unittest.TestCase):
     """
-    MockKazooClient is nontrivial, so this verifies that it's doing the right thing
+    MockKazooClient is nontrivial, so this verifies basic correctness
     """
 
     def setUp(self):
@@ -37,13 +38,15 @@ class TestMockKazooClient(unittest.TestCase):
         """
         # empty set
         path = '/path/testPath'
-        self.assertRaises(kazoo.exceptions.NoNodeError, self.c.create, path, 'testData')
+        self.assertRaises(
+            kazoo.exceptions.NoNodeError, self.c.create, path, 'testData')
         result = self.c.create(path, 'testData', makepath=True)
         self.assertEqual(result, path)
 
         # middle is missing
         path2 = path + '/two/more'
-        self.assertRaises(kazoo.exceptions.NoNodeError, self.c.create, path2, 'testData2')
+        self.assertRaises(
+            kazoo.exceptions.NoNodeError, self.c.create, path2, 'testData2')
         result = self.c.create(path2, 'testData2', makepath=True)
         self.assertEqual(result, path2)
 
@@ -57,7 +60,8 @@ class TestMockKazooClient(unittest.TestCase):
 
         # it's not allowed to have a child of an ephemeral node
         path = path + '/child'
-        self.assertRaises(kazoo.exceptions.NoChildrenForEphemeralsError, self.c.create, path,
+        self.assertRaises(
+            kazoo.exceptions.NoChildrenForEphemeralsError, self.c.create, path,
             'testChildData')
 
     def test_ensure_path(self):
@@ -121,7 +125,8 @@ class TestMockKazooClient(unittest.TestCase):
         Test that set updates the value
         """
         path = '/one'
-        self.assertRaises(kazoo.exceptions.NoNodeError, self.c.set, path, 'data')
+        self.assertRaises(
+            kazoo.exceptions.NoNodeError, self.c.set, path, 'data')
         self.c.create(path, 'data')
         self.c.set(path, 'updated')
         data, metadata = self.c.get(path)
@@ -140,7 +145,9 @@ class TestMockKazooClient(unittest.TestCase):
         self.c.set(path, 'updated2', version=2)
         data, metadata = self.c.get(path)
         self.assertEqual(data, 'updated2')
-        self.assertRaises(kazoo.exceptions.BadVersionError, self.c.set, path, 'updated3', version=1)
+        self.assertRaises(
+            kazoo.exceptions.BadVersionError, self.c.set, path, 'updated3',
+            version=1)
         data, metadata = self.c.get(path)
         self.assertNotEqual(data, 'updated3')
         self.c.set(path, 'updated4', version=-1)
@@ -168,7 +175,8 @@ class TestMockKazooClient(unittest.TestCase):
         self.c.create('/one/b', None)
         self.c.create('/two', None)
         self.c.create('/two/a', None)
-        self.assertRaises(kazoo.exceptions.NotEmptyError, self.c.delete, '/one')
+        self.assertRaises(
+            kazoo.exceptions.NotEmptyError, self.c.delete, '/one')
         self.c.delete('/one', recursive=True)
         self.assertFalse(self.c.exists('/one'))
         self.assertFalse(self.c.exists('/one/a'))
@@ -183,7 +191,8 @@ class TestMockKazooClient(unittest.TestCase):
         path = '/one'
         self.c.create(path, 'data')
         self.c.set(path, 'updated', version=2)
-        self.assertRaises(kazoo.exceptions.BadVersionError, self.c.delete, path, version=1)
+        self.assertRaises(
+            kazoo.exceptions.BadVersionError, self.c.delete, path, version=1)
         self.c.delete(path, version=3)
         self.assertFalse(self.c.exists(path))
         self.c.create(path, 'data')

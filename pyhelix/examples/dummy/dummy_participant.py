@@ -3,13 +3,14 @@ import logging
 import threading
 
 import pyhelix.participant as participant
-import pyhelix.statemodel as statemodel
+
+import dummy_statemodel
 
 logging.basicConfig(level=logging.WARN)
 
 # This is a dummy participant. It starts up, runs forever, and prints state
 # transitions as it gets them. It's close to what a real participant would look
-# like, except that it uses a MockStateModel.
+# like, except that it uses a DummyStateModel.
 
 
 def main(args):
@@ -18,7 +19,7 @@ def main(args):
         participant_id=args.participantId)
     try:
         p.register_state_model_fty(
-            'MasterSlave', statemodel.MockStateModelFactory())
+            'MasterSlave', dummy_statemodel.DummyStateModelFactory())
         p.connect()
 
         # wait forever

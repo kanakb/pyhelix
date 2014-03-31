@@ -59,32 +59,6 @@ class StateModel(object):
             'No method found for {0}-{1}'.format(from_state, to_state))
 
 
-class MockStateModel(StateModel):
-    """
-    Mock state model for master-slave
-    """
-
-    def on_become_slave_from_offline(self, message):
-        partition_name = message['simpleFields']['PARTITION_NAME']
-        print('{0}: on become slave from offline'.format(partition_name))
-
-    def on_become_offline_from_slave(self, message):
-        partition_name = message['simpleFields']['PARTITION_NAME']
-        print('{0}: on become offline from slave'.format(partition_name))
-
-    def on_become_master_from_slave(self, message):
-        partition_name = message['simpleFields']['PARTITION_NAME']
-        print('{0}: on become master from slave'.format(partition_name))
-
-    def on_become_slave_from_master(self, message):
-        partition_name = message['simpleFields']['PARTITION_NAME']
-        print('{0}: on become slave from master'.format(partition_name))
-
-    def on_become_dropped_from_offline(self, message):
-        partition_name = message['simpleFields']['PARTITION_NAME']
-        print('{0}: on become dropped from offline'.format(partition_name))
-
-
 class StateModelFactory(object):
     """
     Base state model factory
@@ -125,22 +99,3 @@ class StateModelFactory(object):
         if partition_name in self._state_models:
             return self._state_models[partition_name]
         return None
-
-
-class MockStateModelFactory(StateModelFactory):
-    """
-    Mock state model factory
-    """
-
-    def create_state_model(self, partition_name):
-        """
-        Create a MockStateModel
-
-        Args:
-            partition_name: The partition
-
-        Returns:
-            MockStateModel
-        """
-        state_model = MockStateModel()
-        return state_model

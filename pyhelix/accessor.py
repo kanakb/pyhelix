@@ -38,7 +38,7 @@ class DataAccessor(object):
         try:
             node = data
             if data:
-                node = json.dumps(data, indent=2)
+                node = json.dumps(data, indent=2, sort_keys=True)
             logging.info('creating {0} with {1}'.format(path, data))
             self._client.create(
                 path, node, ephemeral=key['ephemeral'],
@@ -64,7 +64,7 @@ class DataAccessor(object):
             True if successful, False otherwise
         """
         if data:
-            data = json.dumps(data, indent=2)
+            data = json.dumps(data, indent=2, sort_keys=True)
         path = key['path']
         try:
             if not key['update_only_on_exists']:
@@ -145,7 +145,7 @@ class DataAccessor(object):
                     try:
                         node = updated_value
                         if updated_value:
-                            node = json.dumps(updated_value, indent=2)
+                            node = json.dumps(updated_value, indent=2, sort_keys=True)
                         self._client.create(
                             path, node, ephemeral=key['ephemeral'],
                             sequence=key['sequential'], makepath=True)
@@ -182,7 +182,7 @@ class DataAccessor(object):
                         'Tried to do a subtract on a property that'
                         ' doesn\'t allow merge')
                     return False
-                value = json.dumps(value, indent=2)
+                value = json.dumps(value, indent=2, sort_keys=True)
                 update_stat = self._client.set(
                     path, value, version=get_stat.version)
                 if update_stat:

@@ -145,7 +145,8 @@ class DataAccessor(object):
                     try:
                         node = updated_value
                         if updated_value:
-                            node = json.dumps(updated_value, indent=2, sort_keys=True)
+                            node = json.dumps(
+                                updated_value, indent=2, sort_keys=True)
                         self._client.create(
                             path, node, ephemeral=key['ephemeral'],
                             sequence=key['sequential'], makepath=True)

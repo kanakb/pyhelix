@@ -6,12 +6,12 @@ class StateModelParser(object):
     State model helper
     """
 
-    def get_method_for_transition(self, clazz, from_state, to_state):
+    def get_method_for_transition(self, model, from_state, to_state):
         """
         Get the callback for a state get_method_for_transition
 
         Args:
-            clazz: The class that extends StateModel with the callbacks
+            model: The instance of StateModel subclass with the callbacks
             from_state: The previous state
             to_state: The new state
 
@@ -21,7 +21,7 @@ class StateModelParser(object):
         method_name = (
             'on_become_' + to_state.lower() + '_from_' + from_state.lower())
         logging.debug('method_name: {0}'.format(method_name))
-        return getattr(clazz, method_name, clazz.default_transition_handler)
+        return getattr(model, method_name, model.default_transition_handler)
 
 
 class StateModel(object):

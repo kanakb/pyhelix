@@ -75,9 +75,15 @@ class KeyBuilder(object):
             self._cluster_id, participant_id, session_id, resource_id)
 
     @propertykey(merge_on_update=True)
-    def errors(self, participant_id):
-        return '/{0}/INSTANCES/{1}/ERRORS'.format(
-            self._cluster_id, participant_id)
+    def errors(self, participant_id, session_id, resource_id):
+        return '/{0}/INSTANCES/{1}/ERRORS/{2}/{3}'.format(
+            self._cluster_id, participant_id, session_id, resource_id)
+
+    @propertykey(merge_on_update=True)
+    def error(self, participant_id, session_id, resource_id, partition_id):
+        return '/{0}/INSTANCES/{1}/ERRORS/{2}/{3}'.format(
+            self._cluster_id, participant_id, session_id, resource_id,
+            partition_id)
 
     @propertykey(merge_on_update=True)
     def health_report(self, participant_id):

@@ -38,16 +38,29 @@ class HelixTask(object):
             str(thread), self._message))
         from_state = self._message['simpleFields']['FROM_STATE']
         to_state = self._message['simpleFields']['TO_STATE']
-        method_to_invoke = self._state_model_parser.get_method_for_transition(
-            self._state_model, from_state, to_state)
-        logging.info('method_to_invoke: {0}'.format(str(method_to_invoke)))
-        method_to_invoke(self._message)
+        session_id = self._participant.get_session_id()
+        resource_name = self._message['simpleFields']['RESOURCE_NAME']
+        partition_name = self._message['simpleFields']['PARTITION_NAME']
+        try:
+            parser = self._state_model_parser
+            method_to_invoke = parser.get_method_for_transition(
+                self._state_model, from_state, to_state)
+            logging.info('method_to_invoke: {0}'.format(str(method_to_invoke)))
+            method_to_invoke(self._message)
+        except Exception as e:
+            logging.error('{0}-{1} transition failed, {2}'.format(
+                from_state, to_state, e))
+            to_state = 'ERROR'
+            error_key = self._builder.error(
+                self._participant_id, session_id, resource_name,
+                partition_name)
+            error_node = znode.get_empty_znode(partition_name)
+            error_node['simpleFields']['ERROR'] = str(e)
+            self._accessor.update(error_key, error_node)
         self._state_model._current_state = to_state
 
         # update current-state, then remove message
         sub = False
-        resource_name = self._message['simpleFields']['RESOURCE_NAME']
-        partition_name = self._message['simpleFields']['PARTITION_NAME']
         current_state = znode.get_empty_znode(resource_name)
         current_state['mapFields'][partition_name] = {}
         if to_state != 'DROPPED':
@@ -56,13 +69,12 @@ class HelixTask(object):
                 to_state)
             current_state['simpleFields']['STATE_MODEL_DEF'] = (
                 self._message['simpleFields']['STATE_MODEL_DEF'])
-            current_state['simpleFields']['SESSION_ID'] = (
-                self._participant.get_session_id())
+            current_state['simpleFields']['SESSION_ID'] = session_id
         else:
             # drop the partition from the current state
             sub = True
         self._accessor.update(self._builder.current_state(
-            self._participant_id, self._participant.get_session_id(),
+            self._participant_id, session_id,
             resource_name), current_state, sub=sub)
         self._accessor.remove(self._builder.message(
             self._participant_id, self._message['id']))

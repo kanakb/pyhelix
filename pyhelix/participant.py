@@ -60,6 +60,7 @@ class Participant(object):
             self._builder.live_instance(self._participant_id))
         self._client.stop()
         self._client.close()
+        self._reset()
 
     def is_connected(self):
         """
@@ -125,8 +126,12 @@ class Participant(object):
 
         Args:
             state_model_name: The state model for which to ignore transitions
+
+        Raises:
+            KeyError: If state_model_name is not registered
         """
-        self._state_model_ftys.pop(state_model_name)
+        removed = self._state_model_ftys.pop(state_model_name)
+        removed.reset()
 
     def _register_message_callback(self, callback):
         """
@@ -229,8 +234,16 @@ class Participant(object):
         if state == kazoo.client.KazooState.LOST:
             self._is_lost = True
         elif self._is_lost and state == kazoo.client.KazooState.CONNECTED:
+            self._reset()
             self._client.handler.spawn(self._init)
             self._is_lost = False
+
+    def _reset(self):
+        """
+        Internal cleanup (private)
+        """
+        for smf in self._state_model_ftys.itervalues():
+            smf.reset()
 
     def _init(self):
         """

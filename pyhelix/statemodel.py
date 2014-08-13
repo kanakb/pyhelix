@@ -55,8 +55,14 @@ class StateModel(object):
         """
         from_state = message['simpleFields']['FROM_STATE']
         to_state = message['simpleFields']['TO_STATE']
-        logging.warn(
+        logging.error(
             'No method found for {0}-{1}'.format(from_state, to_state))
+
+    def reset(self):
+        """
+        Method that is invoked when revert to initial state is requested
+        """
+        logging.warn('Default reset method invoked on state model')
 
 
 class StateModelFactory(object):
@@ -99,3 +105,10 @@ class StateModelFactory(object):
         if partition_name in self._state_models:
             return self._state_models[partition_name]
         return None
+
+    def reset(self):
+        """
+        Invoked when cleanup is requested for all state provided state models
+        """
+        for sm in self._state_models.itervalues():
+            sm.reset()

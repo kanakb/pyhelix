@@ -25,6 +25,7 @@ class SpectatorConnection(object):
         self._accessor = accessor.DataAccessor(cluster_id, self._client)
         self._keybuilder = self._accessor.get_key_builder()
         self._spectators = {}
+        self._participants_lock = self._client.handler.lock_object()
         self._participants = {}
         self._is_lost = False
 
@@ -70,7 +71,7 @@ class SpectatorConnection(object):
         if resource_id in self._spectators:
             return self._spectators[resource_id]
         logging.debug('About to start watching {0}'.format(resource_id))
-        s = Spectator(self._accessor, resource_id, self._participants)
+        s = Spectator(self._accessor, resource_id, self._participants, self._participants_lock)
         self._spectators[resource_id] = s
         return s
 
@@ -118,7 +119,8 @@ class SpectatorConnection(object):
             return True
         participant_config = json.loads(data)
         if participant_config and 'id' in participant_config:
-            self._participants[participant_config['id']] = participant_config
+            with self._participants_lock:
+                self._participants[participant_config['id']] = participant_config
         return True
 
     def _connection_listener(self, state):
@@ -138,7 +140,8 @@ class SpectatorConnection(object):
         """
         Internal initialization (private)
         """
-        self._participants.clear()
+        with self._participants_lock:
+            self._participants.clear()
         self._accessor.watch_children(
             self._keybuilder.participant_configs(), self._pc_parent_watcher)
         for resource_id, s in self._spectators.iteritems():
@@ -149,7 +152,7 @@ class Spectator(object):
     """
     Helix spectator
     """
-    def __init__(self, accessor, resource_id, participants):
+    def __init__(self, accessor, resource_id, participants, participants_lock):
         """
         Initialize a spectator for a resource
 
@@ -159,6 +162,7 @@ class Spectator(object):
             participants: Map of participant id to participant config
         """
         self._mapping = {}
+        self._participants_lock = participants_lock
         self._participants = participants
         self._accessor = accessor
         self._keybuilder = accessor.get_key_builder()
@@ -177,15 +181,17 @@ class Spectator(object):
         """
         result = set()
         partitions = None
-        if partition_id:
-            partitions = [partition_id]
-        else:
-            partitions = self._mapping.keys()
-        for partition_id in partitions:
-            for participant_id, s in self._mapping[partition_id].iteritems():
-                if s == state:
-                    result.add(participant_id)
-        return [self._participants[p] for p in result]
+
+        with self._participants_lock:
+            if partition_id:
+                partitions = [partition_id]
+            else:
+                partitions = self._mapping.keys()
+            for partition_id in partitions:
+                for participant_id, s in self._mapping[partition_id].iteritems():
+                    if s == state:
+                        result.add(participant_id)
+                return [self._participants[p] for p in result]
 
     def get_state_map(self, partition_id):
         """
@@ -197,10 +203,11 @@ class Spectator(object):
         Returns:
             Map of participant id to state
         """
-        if partition_id in self._mapping:
-            return self._mapping[partition_id]
-        else:
-            return {}
+        with self._participants_lock:
+            if partition_id in self._mapping:
+                return self._mapping[partition_id]
+            else:
+                return {}
 
     def _ev_watcher(self, data, stat):
         """
@@ -213,16 +220,17 @@ class Spectator(object):
         Returns:
             Always True
         """
-        if not data:
-            self._mapping = {}
-            return True
-        external_view = json.loads(data)
-        if (external_view and
-           'mapFields' in external_view and external_view['mapFields']):
-            self._mapping = external_view['mapFields']
-        else:
-            self._mapping = {}
-        logging.debug('Updated external view: {0}'.format(self._mapping))
+        with self._participants_lock:
+            if not data:
+                self._mapping = {}
+                return True
+            external_view = json.loads(data)
+            if (external_view and
+               'mapFields' in external_view and external_view['mapFields']):
+                self._mapping = external_view['mapFields']
+            else:
+                self._mapping = {}
+            logging.debug('Updated external view: {0}'.format(self._mapping))
         return True
 
     def _init(self, resource_id):

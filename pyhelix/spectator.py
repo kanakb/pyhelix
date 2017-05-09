@@ -191,7 +191,7 @@ class Spectator(object):
                 for participant_id, s in self._mapping[partition_id].iteritems():
                     if s == state:
                         result.add(participant_id)
-                return [self._participants[p] for p in result]
+        return [self._participants[p] for p in result]
 
     def get_state_map(self, partition_id):
         """

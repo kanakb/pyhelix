@@ -1,8 +1,8 @@
 import logging
 import threading
 
-import statemodel
-import znode
+import pyhelix.statemodel as statemodel
+import pyhelix.znode as znode
 
 
 class HelixTask(object):
@@ -50,7 +50,7 @@ class HelixTask(object):
         partition_name = self._message['simpleFields']['PARTITION_NAME']
         current_state = znode.get_empty_znode(resource_name)
         current_state['mapFields'][partition_name] = {}
-        if to_state != 'DROPPED':
+        if to_state != 'OFFLINE':
             # update the current state
             current_state['mapFields'][partition_name]['CURRENT_STATE'] = (
                 to_state)
@@ -61,8 +61,12 @@ class HelixTask(object):
         else:
             # drop the partition from the current state
             sub = True
-        self._accessor.update(self._builder.current_state(
+
+        b = self._builder.current_state(
             self._participant_id, self._participant.get_session_id(),
-            resource_name), current_state, sub=sub)
-        self._accessor.remove(self._builder.message(
-            self._participant_id, self._message['id']))
+            resource_name)
+        self._accessor.update(b, current_state, sub=sub)
+
+        b = self._builder.message(
+            self._participant_id, self._message['id'])
+        self._accessor.remove(b)

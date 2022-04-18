@@ -2,7 +2,7 @@ import json
 import kazoo.client
 import logging
 
-import accessor
+import pyhelix.accessor as accessor
 
 
 class SpectatorConnection(object):
@@ -141,7 +141,7 @@ class SpectatorConnection(object):
         self._participants.clear()
         self._accessor.watch_children(
             self._keybuilder.participant_configs(), self._pc_parent_watcher)
-        for resource_id, s in self._spectators.iteritems():
+        for resource_id, s in self._spectators:
             s._init(resource_id)
 
 
@@ -187,7 +187,7 @@ class Spectator(object):
                     result.add(participant_id)
         return [self._participants[p] for p in result]
 
-    def get_state_map(self, partition_id):
+    def get_state_map(self):
         """
         Get a mapping of participant to state for a partition
 
@@ -197,10 +197,7 @@ class Spectator(object):
         Returns:
             Map of participant id to state
         """
-        if partition_id in self._mapping:
-            return self._mapping[partition_id]
-        else:
-            return {}
+        return self._mapping
 
     def _ev_watcher(self, data, stat):
         """

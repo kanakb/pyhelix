@@ -5,7 +5,7 @@ import logging
 import os
 import traceback
 
-import keybuilder
+import pyhelix.keybuilder as keybuilder
 
 
 class DataAccessor(object):
@@ -23,7 +23,7 @@ class DataAccessor(object):
         self._cluster_id = cluster_id
         self._client = zk_client
 
-    def create(self, key, data):
+    def create(self, key, data, convert=True):
         """
         Create a property, creating parent nodes as necessary
 
@@ -37,12 +37,17 @@ class DataAccessor(object):
         path = key['path']
         try:
             node = data
-            if data:
-                node = json.dumps(data, indent=2, sort_keys=True)
+            if data and convert:
+                node = json.dumps(data, ensure_ascii=True) #, indent=2, sort_keys=True)
             logging.info('creating {0} with {1}'.format(path, data))
+            if data and convert:
+               node = bytes(json.dumps(data).strip(), 'utf-8')
+            else:
+               node = data
             self._client.create(
                 path, node, ephemeral=key['ephemeral'],
                 sequence=key['sequential'], makepath=True)
+
             return True
         except kazoo.exceptions.NodeExistsError:
             logging.warn('{0} exists already'.format(path))
@@ -145,7 +150,7 @@ class DataAccessor(object):
                     try:
                         node = updated_value
                         if updated_value:
-                            node = json.dumps(updated_value, indent=2, sort_keys=True)
+                            node =  bytes(json.dumps(node).strip(), 'utf-8')
                         self._client.create(
                             path, node, ephemeral=key['ephemeral'],
                             sequence=key['sequential'], makepath=True)
@@ -157,20 +162,20 @@ class DataAccessor(object):
                 if key['merge_on_update']:
                     # merge in if allowed
                     if not sub:
-                        for k, v in updated_value['simpleFields'].iteritems():
+                        for k, v in updated_value['simpleFields'].items():
                             value['simpleFields'][k] = v
-                        for k, v in updated_value['listFields'].iteritems():
+                        for k, v in updated_value['listFields'].items():
                             value['listFields'][k] = v
-                        for k, v in updated_value['mapFields'].iteritems():
+                        for k, v in updated_value['mapFields'].items():
                             value['mapFields'][k] = v
                     else:
-                        for k, v in updated_value['simpleFields'].iteritems():
+                        for k, v in updated_value['simpleFields'].items():
                             if k in value['simpleFields']:
                                 value['simpleFields'].pop(k)
-                        for k, v in updated_value['listFields'].iteritems():
+                        for k, v in updated_value['listFields'].items():
                             if k in value['listFields']:
                                 value['listFields'].pop(k)
-                        for k, v in updated_value['mapFields'].iteritems():
+                        for k, v in updated_value['mapFields'].items():
                             if k in value['mapFields']:
                                 value['mapFields'].pop(k)
                 elif not sub:
@@ -182,7 +187,7 @@ class DataAccessor(object):
                         'Tried to do a subtract on a property that'
                         ' doesn\'t allow merge')
                     return False
-                value = json.dumps(value, indent=2, sort_keys=True)
+                value = bytes(json.dumps(value).strip(), 'utf-8')
                 update_stat = self._client.set(
                     path, value, version=get_stat.version)
                 if update_stat:

@@ -18,10 +18,12 @@ def main(args):
         args.cluster, args.host, args.port, args.zkSvr,
         participant_id=args.participantId)
     try:
-        p.register_state_model_fty(
-            'MasterSlave', dummy_statemodel.DummyStateModelFactory())
-        p.connect()
+        d = dummy_statemodel.DummyStateModelFactory()
 
+        p.register_state_model_fty(
+            'MasterSlave', d)
+
+        p.connect()
         # wait forever
         dummy_event = threading.Event()
         dummy_event.wait()

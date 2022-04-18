@@ -84,6 +84,16 @@ class KeyBuilder(object):
         return '/{0}/INSTANCES/{1}/HEALTHREPORT'.format(
             self._cluster_id, participant_id)
 
+    @propertykey(merge_on_update=True)
+    def history(self, participant_id):
+        return '/{0}/INSTANCES/{1}/HISTORY'.format(
+            self._cluster_id, participant_id)
+
+    @propertykey(merge_on_update=True)
+    def customized_states(self, participant_id):
+        return '/{0}/INSTANCES/{1}/CUSTOMIZEDSTATES'.format(
+            self._cluster_id, participant_id)
+
     @propertykey()
     def status_updates(self, participant_id):
         return '/{0}/INSTANCES/{1}/STATUSUPDATES'.format(

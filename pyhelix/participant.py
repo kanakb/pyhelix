@@ -1,11 +1,12 @@
 import kazoo.client
 import logging
 import os
+import time
 
-import accessor
-import constants
-import helixexec
-import znode
+import pyhelix.accessor as accessor
+import pyhelix.constants as constants
+import pyhelix.helixexec as helixexec
+import pyhelix.znode as znode
 
 
 class Participant(object):
@@ -98,7 +99,7 @@ class Participant(object):
         if not self.is_connected():
             logging.error('Cannot get session ID, not connected')
             return None
-        return str(self._client.client_id[0])
+        return hex(self._client.client_id[0])[2:]
 
     def register_pre_connect_callback(self, callback):
         """
@@ -150,21 +151,27 @@ class Participant(object):
             node = znode.get_empty_znode(self._participant_id)
             node['simpleFields'] = {
                 'HELIX_HOST': self._host, 'HELIX_PORT': str(self._port),
-                'HELIX_ENABLED': 'true'}
+                'HELIX_ENABLED': 'true',
+                'HELIX_ENABLED_TIMESTAMP': round(time.time() * 1000)}
             self._accessor.create(
                 self._builder.participant_config(self._participant_id), node)
             self._accessor.create(
-                self._builder.instance(self._participant_id), b'')
+                self._builder.instance(self._participant_id), b'', convert=False)
             self._accessor.create(
-                self._builder.current_states(self._participant_id), b'')
+                self._builder.current_states(self._participant_id), b'', convert=False)
             self._accessor.create(
-                self._builder.errors(self._participant_id), b'')
+                self._builder.errors(self._participant_id), b'', convert=False)
             self._accessor.create(
-                self._builder.health_report(self._participant_id), b'')
+                self._builder.health_report(self._participant_id), b'', convert=False)
             self._accessor.create(
-                self._builder.messages(self._participant_id), b'')
+                self._builder.history(self._participant_id), b'', convert=False)
             self._accessor.create(
-                self._builder.status_updates(self._participant_id), b'')
+                self._builder.messages(self._participant_id), b'', convert=False)
+            self._accessor.create(
+                self._builder.status_updates(self._participant_id), b'', convert=False)
+            self._accessor.create(
+                self._builder.customized_states(self._participant_id), b'', convert=False)
+
         elif not exists:
             return False
         return True
@@ -195,7 +202,7 @@ class Participant(object):
         node = znode.get_empty_znode(self._participant_id)
         node['simpleFields'] = {
             'HELIX_VERSION': 'pyhelix-{0}'.format(constants.CURRENT_VERSION),
-            'SESSION_ID': str(self._client.client_id[0]),
+            'SESSION_ID': self.get_session_id(),
             'LIVE_INSTANCE': '{0}@{1}'.format(os.getpid(), self._host)}
         return self._accessor.create(
             self._builder.live_instance(self._participant_id), node)

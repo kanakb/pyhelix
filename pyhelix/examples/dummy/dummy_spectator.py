@@ -3,7 +3,7 @@ import logging
 import threading
 import time
 
-import pyhelix.spectator as spectator
+import spectator as spectator
 
 logging.basicConfig(level=logging.WARN)
 
@@ -19,8 +19,6 @@ def main(args):
     try:
         conn.connect()
         s = conn.spectate(args.resource)
-        for partition_id in args.partitions:
-            print s.get_state_map(partition_id)
     finally:
         conn.disconnect()
 

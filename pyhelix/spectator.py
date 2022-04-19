@@ -159,6 +159,7 @@ class Spectator(object):
             participants: Map of participant id to participant config
         """
         self._mapping = {}
+        self._ext_views_map = {}
         self._participants = participants
         self._accessor = accessor
         self._keybuilder = accessor.get_key_builder()
@@ -199,6 +200,9 @@ class Spectator(object):
         """
         return self._mapping
 
+    def get_ext_views_map(self):
+        return self._ext_views_map
+
     def _ev_watcher(self, data, stat):
         """
         Callback for external view change (private)
@@ -222,6 +226,20 @@ class Spectator(object):
         logging.debug('Updated external view: {0}'.format(self._mapping))
         return True
 
+    def _evs_watcher(self, data, stat):
+        if data:
+            data = json.loads(data)
+        self._ext_views_map[data["id"]] = data['mapFields']
+
+    def _ext_views_watcher(self, data):
+        if not data:
+            self._ext_views_map = {}
+            return True
+        for child in data:
+            self._accessor.watch_property(
+                self._keybuilder.external_view(child), self._evs_watcher)
+        return True
+
     def _init(self, resource_id):
         """
         Internal initialization (private)
@@ -231,3 +249,6 @@ class Spectator(object):
         """
         self._accessor.watch_property(
             self._keybuilder.external_view(resource_id), self._ev_watcher)
+
+        self._accessor.watch_children(
+            self._keybuilder.external_views(), self._ext_views_watcher)

@@ -51,7 +51,7 @@ class DataAccessor(object):
             return True
         except kazoo.exceptions.NodeExistsError:
             logging.warn('{0} exists already'.format(path))
-            return self.set(key, data)
+            return self.set(key, node)
         except kazoo.exceptions.KazooException:
             logging.error(path)
             logging.error(traceback.format_exc())
@@ -69,7 +69,12 @@ class DataAccessor(object):
             True if successful, False otherwise
         """
         if data:
-            data = json.dumps(data, indent=2, sort_keys=True)
+            if not isinstance(data, bytes):
+                data = json.dumps(data, ensure_ascii=True)
+                data = bytes(data.strip(), 'utf-8')
+            else:
+                data = data
+
         path = key['path']
         try:
             if not key['update_only_on_exists']:

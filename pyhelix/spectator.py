@@ -163,6 +163,7 @@ class Spectator(object):
         self._participants = participants
         self._accessor = accessor
         self._keybuilder = accessor.get_key_builder()
+        self._ext_views_cb = None
         self._init(resource_id)
 
     def get_participants(self, state, partition_id=None):
@@ -226,18 +227,25 @@ class Spectator(object):
         logging.debug('Updated external view: {0}'.format(self._mapping))
         return True
 
+    def register_ext_views_cb(self, cb):
+        self._ext_views_cb = cb
+
     def _evs_watcher(self, data, stat):
         if data:
             data = json.loads(data)
         self._ext_views_map[data["id"]] = data['mapFields']
+        if self._ext_views_cb:
+            self._ext_views_cb(self._ext_views_map)
 
     def _ext_views_watcher(self, data):
         if not data:
             self._ext_views_map = {}
             return True
+
         for child in data:
             self._accessor.watch_property(
                 self._keybuilder.external_view(child), self._evs_watcher)
+
         return True
 
     def _init(self, resource_id):
